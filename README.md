@@ -13,7 +13,7 @@
 
 | **Dashboard** | **Boss Report** | **Protocol Config** |
 |:---:|:---:|:---:|
-| <img src="screenshots/dashboard.png" width="250"> | <img src="screenshots/report.png" width="250"> | <img src="screenshots/config.png" width="250"> |
+| <img src="screenshots/dashboard.jpeg" width="250"> | <img src="screenshots/report.png" width="250"> | <img src="screenshots/config.png" width="250"> |
 
 > *Clean, minimalist "Dark Mode" interface designed for high readability and low battery consumption.*
 
