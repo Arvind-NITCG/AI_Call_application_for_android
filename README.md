@@ -24,7 +24,7 @@ Standard Android `TelephonyManager` listeners (`READ_PHONE_STATE`) are unreliabl
 1.  **App Interference:** Apps like **Truecaller** or Voicemail services momentarily trigger an `OFFHOOK` (Answered) state to identify spam, even if the user never picked up.
 2.  **Aggressive Battery Optimization:** OEMs like Xiaomi (HyperOS) kill background services immediately after a call ends, preventing auto-reply logic from executing.
 
-##  The FORMALHAULT Solutio
+##  The FORMALHAULT Solution
 Shakthi AI bypasses these limitations using a **Forensic State Verification** architecture:
 
 ### 1. Asynchronous Database Verification
