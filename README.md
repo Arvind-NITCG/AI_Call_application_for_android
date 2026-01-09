@@ -1,7 +1,7 @@
-# 🦁 Shakthi AI
+#  AI Powered Call Management App(FORMALHAULT)
 > **Autonomous Call Management & Context-Aware Response System**
 
-**Shakthi AI** is a native Android application designed to intelligently handle phone interruptions. Unlike standard auto-responders, it utilizes a forensic approach to **Android Telephony States** and **System Databases** to accurately distinguish between "Missed", "Rejected", and "Answered" calls—solving the "False Positive" problem caused by apps like Truecaller.
+**FORMALHAULT** is a native Android application designed to intelligently handle phone interruptions. Unlike standard auto-responders, it utilizes a forensic approach to **Android Telephony States** and **System Databases** to accurately distinguish between "Missed", "Rejected", and "Answered" calls—solving the "False Positive" problem caused by apps like Truecaller.
 
 ![Java](https://img.shields.io/badge/Language-Java%20(Native)-orange?style=for-the-badge&logo=java)
 ![Platform](https://img.shields.io/badge/Platform-Android%20(HyperOS%20Tested)-green?style=for-the-badge&logo=android)
@@ -9,7 +9,7 @@
 
 ---
 
-## 📸 Interface (Dark Mode "Hacker" UI)
+##  Interface (Dark Mode "Hacker" UI)
 
 | **Dashboard** | **Boss Report** | **Protocol Config** |
 |:---:|:---:|:---:|
@@ -19,12 +19,12 @@
 
 ---
 
-## 🚀 The Engineering Problem
+##  The Engineering Problem
 Standard Android `TelephonyManager` listeners (`READ_PHONE_STATE`) are unreliable in modern ecosystems because:
 1.  **App Interference:** Apps like **Truecaller** or Voicemail services momentarily trigger an `OFFHOOK` (Answered) state to identify spam, even if the user never picked up.
 2.  **Aggressive Battery Optimization:** OEMs like Xiaomi (HyperOS) kill background services immediately after a call ends, preventing auto-reply logic from executing.
 
-## 💡 The Shakthi AI Solution
+##  The FORMALHAULT Solutio
 Shakthi AI bypasses these limitations using a **Forensic State Verification** architecture:
 
 ### 1. Asynchronous Database Verification
