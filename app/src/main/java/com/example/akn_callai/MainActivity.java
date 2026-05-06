@@ -8,17 +8,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.CallLog;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
-import android.content.Intent;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,40 +31,50 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 101;
 
-    // UI Components
-    EditText etMessage;
-    Button btnSave;
+
     RecyclerView recyclerView;
     CallLogAdapter adapter;
     List<CallLogAdapter.CallLogItem> callList;
+    SwitchMaterial switchVoice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerViewCalls);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         callList = new ArrayList<>();
         adapter = new CallLogAdapter(callList);
         recyclerView.setAdapter(adapter);
 
-        // 2. Setup Header Navigation (P and R)
         View btnPreferences = findViewById(R.id.btnPreferences);
         View btnReport = findViewById(R.id.btnReport);
 
-        // Click P -> Go to Preferences (Type Message)
         btnPreferences.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, PreferencesActivity.class));
         });
 
-        // Click R -> Go to Report (See AI Logs)
         btnReport.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, ReportActivity.class));
         });
 
-        // 3. Permissions & Data
+        switchVoice = findViewById(R.id.switchVoice);
+        SharedPreferences prefs = getSharedPreferences("AI_PREFS", MODE_PRIVATE);
+
+        boolean isVoiceEnabled = prefs.getBoolean("is_voice_enabled", true);
+        switchVoice.setChecked(isVoiceEnabled);
+
+        switchVoice.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Save the new state immediately
+            prefs.edit().putBoolean("is_voice_enabled", isChecked).apply();
+
+            if (isChecked) {
+                Toast.makeText(this, "Voice: ACTIVE 🔊", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Voice: MUTED 🔇", Toast.LENGTH_SHORT).show();
+            }
+        });
         if (checkPermission()) {
             loadRealCallLogs();
         } else {
@@ -73,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Refresh the list every time the user opens the app (The "Boss" feature)
     @Override
     protected void onResume() {
         super.onResume();
@@ -84,9 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadRealCallLogs() {
         callList.clear();
-
         SharedPreferences prefs = getSharedPreferences("AI_PREFS", MODE_PRIVATE);
-        // Load our list of specific events
         Set<String> aiEvents = prefs.getStringSet("ai_handled_events", new HashSet<>());
 
         try {
@@ -103,11 +109,10 @@ public class MainActivity extends AppCompatActivity {
                 while (cursor.moveToNext()) {
                     String number = cursor.getString(numberIndex);
                     String name = cursor.getString(nameIndex);
-                    long callDate = cursor.getLong(dateIndex); // Time call started
+                    long callDate = cursor.getLong(dateIndex);
 
                     if (name == null || name.isEmpty()) name = "Unknown Caller";
 
-                    // --- NEW LOGIC: Check strict timestamp match ---
                     boolean isHandledByAi = checkIsAiEvent(aiEvents, number, callDate);
 
                     callList.add(new CallLogAdapter.CallLogItem(
@@ -122,22 +127,17 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
-    // Helper to match Number AND Time (Window of 60 seconds)
     private boolean checkIsAiEvent(Set<String> aiEvents, String number, long callDate) {
         for (String event : aiEvents) {
-            // Event format: "NUMBER_TIMESTAMP"
             String[] parts = event.split("_");
             if (parts.length == 2) {
                 String savedNum = parts[0];
                 long savedTime = Long.parseLong(parts[1]);
 
-                // Check Number Match
                 if (savedNum.equals(number)) {
-                    // Check Time Match (Difference less than 60 seconds)
-                    // The AI runs AFTER the call rings, so savedTime > callDate usually.
                     long diff = Math.abs(savedTime - callDate);
-                    if (diff < 60000) {
-                        return true; // Match found!
+                    if (diff < 5000) {
+                        return true;
                     }
                 }
             }
@@ -162,31 +162,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void savePreferences() {
-        String msg = etMessage.getText().toString();
-        if(!msg.isEmpty()){
-            getSharedPreferences("AI_PREFS", Context.MODE_PRIVATE)
-                    .edit().putString("custom_msg", msg).apply();
-            Toast.makeText(this, "AI Reply Updated!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void loadPreferences() {
-        String msg = getSharedPreferences("AI_PREFS", Context.MODE_PRIVATE)
-                .getString("custom_msg", "");
-        etMessage.setText(msg);
-    }
-
     private boolean checkPermission() {
+        // NOTE: ADDED MODIFY_AUDIO_SETTINGS check here is not strictly required for runtime,
+        // but ensure it is in Manifest!
         int resultCallLog = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG);
         int resultReadPhone = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE);
         int resultAnswer = ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS);
-        int resultSendSms = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS); // <--- NEW!
+        int resultSendSms = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS);
+        int resultContacts = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS);
 
         return resultCallLog == PackageManager.PERMISSION_GRANTED &&
                 resultReadPhone == PackageManager.PERMISSION_GRANTED &&
                 resultAnswer == PackageManager.PERMISSION_GRANTED &&
-                resultSendSms == PackageManager.PERMISSION_GRANTED;
+                resultSendSms == PackageManager.PERMISSION_GRANTED &&
+                resultContacts == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermission() {
@@ -194,7 +183,8 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.READ_CALL_LOG,
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.ANSWER_PHONE_CALLS,
-                Manifest.permission.SEND_SMS
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_CONTACTS
         }, PERMISSION_REQUEST_CODE);
     }
 
